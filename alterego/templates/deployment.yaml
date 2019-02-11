@@ -1,5 +1,5 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1beta1
+kind: CronJob
 metadata:
   name: {{ include "alterego.fullname" . }}
   labels:
@@ -8,62 +8,46 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: {{ include "alterego.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "alterego.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+  schedule: "10 * * * *"
+  jobTemplate:
     spec:
-      containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-          - name: SLACK_API_TOKEN
-            value: {{ .Values.SlackAuth }}
-          - name: MONGODB_USERNAME
-            valueFrom:
-              configMapKeyRef:
-                name: mongodb
-                key: mongodbUsername
-          - name: MONGODB_DATABASE
-            valueFrom:
-              configMapKeyRef:
-                name: mongodb
-                key: mongodbDatabase
-          - name: MONGODB_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: mongodb
-                key: mongodb-password
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-#          livenessProbe:
-#            httpGet:
-#              path: /
-#              port: http
-#          readinessProbe:
-#            httpGet:
-#              path: /
-#              port: http
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+      replicas: {{ .Values.replicaCount }}
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: {{ include "alterego.name" . }}
+          app.kubernetes.io/instance: {{ .Release.Name }}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ include "alterego.name" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+        spec:
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+              - name: SLACK_API_TOKEN
+                value: {{ .Values.SlackAuth }}
+              - name: MONGODB_USERNAME
+                valueFrom:
+                  configMapKeyRef:
+                    name: mongodb
+                    key: mongodbUsername
+              - name: MONGODB_DATABASE
+                valueFrom:
+                  configMapKeyRef:
+                    name: mongodb
+                    key: mongodbDatabase
+              - name: MONGODB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: mongodb
+                    key: mongodb-password
+              ports:
+                - name: http
+                  containerPort: 80
+                  protocol: TCP
+              resources:
+                {{- toYaml .Values.resources | nindent 12 }}
+            restartPolicy: OnFailure
