@@ -8,14 +8,9 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  schedule: "10 * * * *"
+  schedule: "05 11 * * 1,2,3,4,5"
   jobTemplate:
     spec:
-      replicas: {{ .Values.replicaCount }}
-      selector:
-        matchLabels:
-          app.kubernetes.io/name: {{ include "alterego.name" . }}
-          app.kubernetes.io/instance: {{ .Release.Name }}
       template:
         metadata:
           labels:
@@ -48,6 +43,4 @@ spec:
                 - name: http
                   containerPort: 80
                   protocol: TCP
-              resources:
-                {{- toYaml .Values.resources | nindent 12 }}
-            restartPolicy: OnFailure
+          restartPolicy: OnFailure
